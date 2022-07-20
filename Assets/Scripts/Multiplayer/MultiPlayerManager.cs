@@ -15,36 +15,23 @@ public class MultiPlayerManager : MonoBehaviourPunCallbacks
 
     [SerializeField] private GameObject playerObj;
 
+    [Header("Init")]
     [SerializeField] private float startTime;
     [SerializeField] private float time;
-    [SerializeField] private float penaltyTime;
     
     [SerializeField] private int score;
 
-    [SerializeField] private MultiPlayerInput player1;
-    [SerializeField] private MultiPlayerInput player2;
-    [SerializeField] private List<MultiPlayerInput> listPlayers = new List<MultiPlayerInput>();
+    [Header("Player")]
+    private string player1Input;
+    private string player2Input;
 
-    [SerializeField] private string player1Input;
-    [SerializeField] private string player2Input;
+    private int player1Score;
+    private int player2Score;
 
-    [SerializeField] private int player1Score;
-    [SerializeField] private int player2Score;
-
-    [SerializeField] private bool player1HasChoise;
-    [SerializeField] private bool player2HasChoise;
-
-    public ChoiseButton rockButton;
-    public ChoiseButton scissorButton;
-    public ChoiseButton paperButton;
-
-    [Header("Test")]
-    [SerializeField]
-    private Text textInfo;
-    [SerializeField]
-    private Text textInfo2;
-
-    private float _penaltyTime;
+    [Header("Choise Button")]
+    [SerializeField] private ChoiseButton rockButton;
+    [SerializeField] private ChoiseButton scissorButton;
+    [SerializeField] private ChoiseButton paperButton;
 
     private void Awake()
     {
@@ -68,9 +55,6 @@ public class MultiPlayerManager : MonoBehaviourPunCallbacks
     {
         var obj = PhotonNetwork.Instantiate(playerObj.name, Vector3.zero, Quaternion.identity);
         obj.GetComponent<MultiPlayerInput>().Init(rockButton, paperButton, scissorButton);
-        listPlayers.Add(obj.GetComponent<MultiPlayerInput>());
-        //player1.photonView.RPC("Initialize", RpcTarget.All, PhotonNetwork.CurrentRoom.GetPlayer(1));
-        //player2.photonView.RPC("Initialize", RpcTarget.All, PhotonNetwork.CurrentRoom.GetPlayer(2));
     }
 
     [PunRPC]
@@ -82,11 +66,9 @@ public class MultiPlayerManager : MonoBehaviourPunCallbacks
         MultiPlayerData.Player2Score = score;
         player1Score = score;
         player2Score = score;
-        _penaltyTime = penaltyTime;
         player1Input = "";
         player2Input = "";
         MultiPlayerUI.Instance.photonView.RPC("Init", RpcTarget.All);
-
 
     }
 
@@ -94,14 +76,21 @@ public class MultiPlayerManager : MonoBehaviourPunCallbacks
     {
         switch (gameState)
         {
-            case GameState.START: photonView.RPC("StartGame", RpcTarget.All); break;
+            case GameState.START: 
+                photonView.RPC(nameof(StartGame), RpcTarget.AllBuffered); 
+                break;
             case GameState.PAUSE: break;
-            case GameState.RPS: photonView.RPC("TimeDeplete", RpcTarget.All); break;
-            case GameState.END: photonView.RPC("EndGame", RpcTarget.All); break;
+            case GameState.RPS: 
+                photonView.RPC(nameof(TimeDeplete), RpcTarget.AllBuffered);
+                photonView.RPC(nameof(ShowScore), RpcTarget.AllBuffered); 
+                break;
+            case GameState.END: 
+                photonView.RPC(nameof(EndGame), RpcTarget.AllBuffered); 
+                break;
         }
     }
 
-    #region temp
+    #region START
     [PunRPC]
     private void StartGame()
     {
@@ -114,40 +103,8 @@ public class MultiPlayerManager : MonoBehaviourPunCallbacks
         }
         MultiPlayerUI.Instance.ShowStartTime(startTime);
     }
+    #endregion
 
-    #region PickChoise
-    //[PunRPC]
-    //public void PickChoise(string choise, int playerID)
-    //{
-    //    if (!isActive) return;
-
-    //    if (gameState != GameState.RPS) return;
-
-    //    if (player1.GetPlayerID == playerID)
-    //    {
-    //        if (player1Input != "") return;
-    //        player1Input = choise;
-    //        Debug.Log(string.Format("Player1Input : {0}", player1Input));
-    //        player1HasChoise = true;
-    //    }
-
-    //    if (player2.GetPlayerID == playerID)
-    //    {
-    //        if (player2Input != "") return;
-    //        player2Input = choise;
-    //        Debug.Log(string.Format("Player2Input : {0}", player2Input));
-    //        player2HasChoise = true;
-    //    }
-
-    //    if (player1Input != "" && player2Input != "")
-    //    {
-    //        Debug.Log(string.Format("Player1Input : {0}, Player2Input : {1}", player1Input, player2Input));
-    //        //Play(playerID);
-    //        photonView.RPC("Play", RpcTarget.All, playerID);
-    //    }
-    //}
-
-    #region PickChoise 2
     [PunRPC]
     public void PickChoise(string choise, int playerId)
     {
@@ -159,217 +116,39 @@ public class MultiPlayerManager : MonoBehaviourPunCallbacks
         {
             if (player1Input != "") return;
             player1Input = choise;
-            Debug.Log(string.Format("Player1Input : {0}", player1Input));
         }
 
         if (playerId == 2)
         {
             if (player2Input != "") return;
             player2Input = choise;
-            Debug.Log(string.Format("Player2Input : {0}", player2Input));
         }
 
         if (player1Input != "" && player2Input != "")
         {
-            Debug.Log(string.Format("Player1Input : {0}, Player2Input : {1}", player1Input, player2Input));
-            //Play(playerID);
-            photonView.RPC("Play", RpcTarget.AllBuffered, playerId);
+            photonView.RPC(nameof(Play), RpcTarget.AllBuffered, playerId);
         }
     }
-    #endregion
-    #endregion
-
-    #region temp Play
-    //[PunRPC]
-    //public void Play(int playerID)
-    //{
-    //    if (!isActive) return;
-
-    //    if (gameState != GameState.RPS) return;
-
-    //    // P1 = Gunting
-    //    // P2 = Kertas
-
-
-
-    //    if (player1.GetPlayerID == playerID)
-    //    {
-    //        textInfo2.text = string.Format("Player1Input : {0}, Player2Input : {1}, Ini Player 1", player1Input, player2Input);
-    //        Player1Condition(playerID);
-    //        //photonView.RPC(nameof(Player1Condition), RpcTarget.All, playerID);
-    //        //MultiPlayerUI.Instance.photonView.RPC("ShowResultImage", RpcTarget.AllBuffered, player2Input);
-    //    }
-
-    //    if (player2.GetPlayerID == playerID)
-    //    {
-    //        textInfo2.text = string.Format("Player1Input : {0}, Player2Input : {1}, Ini Player 2", player1Input, player2Input);
-    //        Player2Condition(playerID);
-    //        //photonView.RPC(nameof(Player2Condition), RpcTarget.All, playerID);
-    //        //MultiPlayerUI.Instance.photonView.RPC("ShowResultImage", RpcTarget.AllBuffered, player1Input);
-    //    }
-    //}
-    #endregion
 
     [PunRPC]
-    public void Play(int playerID)
+    public void Play(int playerId)
     {
         if (!isActive) return;
 
         if (gameState != GameState.RPS) return;
 
-        // P1 = Gunting
-        // P2 = Kertas
-
-        if (playerID == 1)
+        if (playerId == 1)
         {
-            textInfo2.text = string.Format("Player1Input : {0}, Player2Input : {1}, Ini Player 1", player1Input, player2Input);
-            Player1Condition(playerID);
+            Player1Condition(playerId);
             MultiPlayerUI.Instance.ShowResultImage(player2Input);
-            //photonView.RPC(nameof(Player1Condition), RpcTarget.AllBuffered, playerID);
-            //MultiPlayerUI.Instance.photonView.RPC("ShowResultImage", RpcTarget.AllBuffered, player2Input);
         }
 
-        if (playerID == 2)
+        if (playerId == 2)
         {
-            textInfo2.text = string.Format("Player1Input : {0}, Player2Input : {1}, Ini Player 2", player1Input, player2Input);
-            Player2Condition(playerID);
+            Player2Condition(playerId);
             MultiPlayerUI.Instance.ShowResultImage(player1Input);
-            //photonView.RPC(nameof(Player2Condition), RpcTarget.AllBuffered, playerID);
-            //MultiPlayerUI.Instance.photonView.RPC("ShowResultImage", RpcTarget.AllBuffered, player1Input);
         }
     }
-
-    #region Player 1 dan 2 condition
-    //private void Player1Condition(int playerID)
-    //{
-    //    switch (player1Input)
-    //    {
-    //        case "Rock":
-    //            switch (player2Input)
-    //            {
-    //                case "Paper":
-    //                    textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player1 : KALAH", player1Input, player2Input);
-    //                    //CheckCondition(ConditionState.WRONG);
-    //                    //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.WRONG, playerID);
-    //                    break;
-    //                case "Scissor":
-    //                    textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player1 : MENANG", player1Input, player2Input);
-    //                    //CheckCondition(ConditionState.CORRECT);
-    //                    //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.CORRECT, playerID);
-    //                    break;
-    //                case "Rock":
-    //                    textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player1 : DRAW", player1Input, player2Input);
-    //                    //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.TIE, playerID);
-    //                    break;
-    //            }
-    //            break;
-    //        case "Paper":
-    //            switch (player2Input)
-    //            {
-    //                case "Rock":
-    //                    textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player1 : MENANG", player1Input, player2Input);
-    //                    //CheckCondition(ConditionState.CORRECT);
-    //                    //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.CORRECT, playerID);
-    //                    break;
-    //                case "Scissor":
-    //                    textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player1 : KALAH", player1Input, player2Input);
-    //                    //CheckCondition(ConditionState.WRONG);
-    //                    //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.WRONG, playerID);
-    //                    break;
-    //                case "Paper":
-    //                    textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player1 : DRAW", player1Input, player2Input);
-    //                    //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.TIE, playerID);
-    //                    break;
-    //            }
-    //            break;
-    //        case "Scissor":
-    //            switch (player2Input)
-    //            {
-    //                case "Rock":
-    //                    textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player1 : KALAH", player1Input, player2Input);
-    //                    //CheckCondition(ConditionState.WRONG);
-    //                    //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.WRONG, playerID);
-    //                    break;
-    //                case "Paper":
-    //                    textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player1 : MENANG", player1Input, player2Input);
-    //                    //CheckCondition(ConditionState.CORRECT);
-    //                    //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.CORRECT, playerID);
-    //                    break;
-    //                case "Scissor":
-    //                    textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player1 : DRAW", player1Input, player2Input);
-    //                    //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.TIE, playerID);
-    //                    break;
-    //            }
-    //            break;
-    //    }
-    //    player1Input = "";
-    //}
-
-    //private void Player2Condition(int playerID)
-    //{
-    //    switch (player2Input)
-    //    {
-    //        case "Rock":
-    //            switch (player1Input)
-    //            {
-    //                case "Paper":
-    //                    textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player2 : KALAH", player1Input, player2Input);
-    //                    //CheckCondition(ConditionState.WRONG);
-    //                    //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.WRONG, playerID);
-    //                    break;
-    //                case "Scissor":
-    //                    textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player2 : MENANG", player1Input, player2Input);
-    //                    //CheckCondition(ConditionState.CORRECT);
-    //                    //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.CORRECT, playerID);
-    //                    break;
-    //                case "Rock":
-    //                    textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player2 : DRAW", player1Input, player2Input);
-    //                    //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.TIE, playerID);
-    //                    break;
-    //            }
-    //            break;
-    //        case "Paper":
-    //            switch (player1Input)
-    //            {
-    //                case "Rock":
-    //                    textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player2 : MENANG", player1Input, player2Input);
-    //                    //CheckCondition(ConditionState.CORRECT);
-    //                    //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.CORRECT, playerID);
-    //                    break;
-    //                case "Scissor":
-    //                    textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player2 : KALAH", player1Input, player2Input);
-    //                    //CheckCondition(ConditionState.WRONG);
-    //                    //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.WRONG, playerID);
-    //                    break;
-    //                case "Paper":
-    //                    textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player2 : DRAW", player1Input, player2Input);
-    //                    //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.TIE, playerID);
-    //                    break;
-    //            }
-    //            break;
-    //        case "Scissor":
-    //            switch (player1Input)
-    //            {
-    //                case "Rock":
-    //                    textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player2 : KALAH", player1Input, player2Input);
-    //                    //CheckCondition(ConditionState.WRONG);
-    //                    //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.WRONG, playerID);
-    //                    break;
-    //                case "Paper":
-    //                    textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player2 : MENANG", player1Input, player2Input);
-    //                    //CheckCondition(ConditionState.CORRECT);
-    //                    //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.CORRECT, playerID);
-    //                    break;
-    //                case "Scissor":
-    //                    textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player2 : DRAW", player1Input, player2Input);
-    //                    //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.TIE, playerID);
-    //                    break;
-    //            }
-    //            break;
-    //    }
-    //    player2Input = "";
-    //}
-    #endregion
 
     private void Player1Condition(int playerID)
     {
@@ -379,19 +158,13 @@ public class MultiPlayerManager : MonoBehaviourPunCallbacks
                 switch (player2Input)
                 {
                     case "Paper":
-                        textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player1 : KALAH", player1Input, player2Input);
                         CheckCondition(ConditionState.WRONG, playerID);
-                        //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.WRONG, playerID);
                         break;
                     case "Scissor":
-                        textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player1 : MENANG", player1Input, player2Input);
                         CheckCondition(ConditionState.CORRECT, playerID);
-                        //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.CORRECT, playerID);
                         break;
                     case "Rock":
-                        textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player1 : DRAW", player1Input, player2Input);
                         CheckCondition(ConditionState.TIE, playerID);
-                        //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.TIE, playerID);
                         break;
                 }
                 break;
@@ -399,19 +172,13 @@ public class MultiPlayerManager : MonoBehaviourPunCallbacks
                 switch (player2Input)
                 {
                     case "Rock":
-                        textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player1 : MENANG", player1Input, player2Input);
                         CheckCondition(ConditionState.CORRECT, playerID);
-                        //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.CORRECT, playerID);
                         break;
                     case "Scissor":
-                        textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player1 : KALAH", player1Input, player2Input);
                         CheckCondition(ConditionState.WRONG, playerID);
-                        //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.WRONG, playerID);
                         break;
                     case "Paper":
-                        textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player1 : DRAW", player1Input, player2Input);
                         CheckCondition(ConditionState.TIE, playerID);
-                        //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.TIE, playerID);
                         break;
                 }
                 break;
@@ -419,19 +186,13 @@ public class MultiPlayerManager : MonoBehaviourPunCallbacks
                 switch (player2Input)
                 {
                     case "Rock":
-                        textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player1 : KALAH", player1Input, player2Input);
                         CheckCondition(ConditionState.WRONG, playerID);
-                        //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.WRONG, playerID);
                         break;
                     case "Paper":
-                        textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player1 : MENANG", player1Input, player2Input);
                         CheckCondition(ConditionState.CORRECT, playerID);
-                        //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.CORRECT, playerID);
                         break;
                     case "Scissor":
-                        textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player1 : DRAW", player1Input, player2Input);
                         CheckCondition(ConditionState.TIE, playerID);
-                        //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.TIE, playerID);
                         break;
                 }
                 break;
@@ -447,19 +208,13 @@ public class MultiPlayerManager : MonoBehaviourPunCallbacks
                 switch (player1Input)
                 {
                     case "Paper":
-                        textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player2 : KALAH", player1Input, player2Input);
                         CheckCondition(ConditionState.WRONG, playerID);
-                        //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.WRONG, playerID);
                         break;
                     case "Scissor":
-                        textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player2 : MENANG", player1Input, player2Input);
                         CheckCondition(ConditionState.CORRECT, playerID);
-                        //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.CORRECT, playerID);
                         break;
                     case "Rock":
-                        textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player2 : DRAW", player1Input, player2Input);
                         CheckCondition(ConditionState.TIE, playerID);
-                        //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.TIE, playerID);
                         break;
                 }
                 break;
@@ -467,19 +222,13 @@ public class MultiPlayerManager : MonoBehaviourPunCallbacks
                 switch (player1Input)
                 {
                     case "Rock":
-                        textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player2 : MENANG", player1Input, player2Input);
                         CheckCondition(ConditionState.CORRECT, playerID);
-                        //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.CORRECT, playerID);
                         break;
                     case "Scissor":
-                        textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player2 : KALAH", player1Input, player2Input);
                         CheckCondition(ConditionState.WRONG, playerID);
-                        //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.WRONG, playerID);
                         break;
                     case "Paper":
-                        textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player2 : DRAW", player1Input, player2Input);
                         CheckCondition(ConditionState.TIE, playerID);
-                        //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.TIE, playerID);
                         break;
                 }
                 break;
@@ -487,59 +236,18 @@ public class MultiPlayerManager : MonoBehaviourPunCallbacks
                 switch (player1Input)
                 {
                     case "Rock":
-                        textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player2 : KALAH", player1Input, player2Input);
                         CheckCondition(ConditionState.WRONG, playerID);
-                        //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.WRONG, playerID);
                         break;
                     case "Paper":
-                        textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player2 : MENANG", player1Input, player2Input);
                         CheckCondition(ConditionState.CORRECT, playerID);
-                        //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.CORRECT, playerID);
                         break;
                     case "Scissor":
-                        textInfo.text = string.Format("Player1Input : {0}, Player2Input : {1}, Player2 : DRAW", player1Input, player2Input);
                         CheckCondition(ConditionState.TIE, playerID);
-                        //photonView.RPC("CheckCondition", RpcTarget.AllBuffered, ConditionState.TIE, playerID);
                         break;
                 }
                 break;
         }
     }
-
-    #region CheckCondition
-    //private void CheckCondition(ConditionState state, int playerID)
-    //{
-    //    isActive = false;
-    //    ConditionState _state = state;
-    //    Debug.Log(_state);
-
-    //    if (player1.GetPlayerID == playerID)
-    //    {
-    //        _state = state;
-    //        //AddScore(_state, PlayerState.PLAYER1);
-    //        photonView.RPC("AddScore", RpcTarget.AllBuffered, _state, playerID);
-    //        MultiPlayerUI.Instance.photonView.RPC("ShowPopUpText", RpcTarget.AllBuffered, _state, PlayerState.PLAYER1);
-    //    }
-
-    //    if (player2.GetPlayerID == playerID)
-    //    {
-    //        _state = state;
-    //        //AddScore(_state, PlayerState.PLAYER2);
-    //        photonView.RPC("AddScore", RpcTarget.AllBuffered, _state, playerID);
-    //        MultiPlayerUI.Instance.photonView.RPC("ShowPopUpText", RpcTarget.AllBuffered, _state, PlayerState.PLAYER2);
-    //    }
-
-    //    //MultiPlayerUI.Instance.ShowPopUpText(_state);
-        
-
-    //    LeanTween.delayedCall(.5f, () =>
-    //    {
-    //        player1Input = "";
-    //        player2Input = "";
-    //        isActive = true;
-    //    });
-    //}
-    #endregion
 
     private void CheckCondition(ConditionState state, int playerID)
     {
@@ -551,9 +259,7 @@ public class MultiPlayerManager : MonoBehaviourPunCallbacks
         {
             _state = state;
             AddScore(_state, playerID);
-            //photonView.RPC("AddScore", RpcTarget.AllBuffered, _state, playerID);
             MultiPlayerUI.Instance.ShowPopUpText(_state, PlayerState.PLAYER1);
-            //MultiPlayerUI.Instance.photonView.RPC("ShowPopUpText", RpcTarget.AllBuffered, _state, PlayerState.PLAYER1);
         }
 
         if (playerID == 2)
@@ -561,50 +267,8 @@ public class MultiPlayerManager : MonoBehaviourPunCallbacks
             _state = state;
             AddScore(_state, playerID);
             MultiPlayerUI.Instance.ShowPopUpText(_state, PlayerState.PLAYER2);
-            //photonView.RPC("AddScore", RpcTarget.AllBuffered, _state, playerID);
-            //MultiPlayerUI.Instance.photonView.RPC("ShowPopUpText", RpcTarget.AllBuffered, _state, PlayerState.PLAYER2);
         }
-
-        //MultiPlayerUI.Instance.ShowPopUpText(_state);
     }
-
-    #region AddScore
-    //private void AddScore(ConditionState state, int playerID)
-    //{
-    //    if (player1.GetPlayerID == playerID)
-    //    {
-    //        switch (state)
-    //        {
-    //            case ConditionState.CORRECT:
-    //                player1Score += 2;
-    //                break;
-    //            case ConditionState.WRONG:
-    //                player1Score -= 1;
-    //                break;
-    //            case ConditionState.TIE:
-    //                break;
-    //        }
-    //    }
-
-    //    if (player2.GetPlayerID == playerID)
-    //    {
-    //        switch (state)
-    //        {
-    //            case ConditionState.CORRECT:
-    //                player2Score += 2;
-    //                break;
-    //            case ConditionState.WRONG:
-    //                player2Score -= 1;
-    //                break;
-    //            case ConditionState.TIE:
-    //                break;
-    //        }
-    //    }
-    //    photonView.RPC("AddToData", RpcTarget.AllBuffered);
-
-    //    MultiPlayerUI.Instance.photonView.RPC("ShowScore", RpcTarget.AllBuffered);
-    //}
-    #endregion
 
     private void AddScore(ConditionState state, int playerID)
     {
@@ -637,9 +301,15 @@ public class MultiPlayerManager : MonoBehaviourPunCallbacks
                     break;
             }
         }
-        photonView.RPC("AddToData", RpcTarget.AllBuffered, playerID);
 
-        MultiPlayerUI.Instance.photonView.RPC("ShowScore", RpcTarget.AllBuffered, player1Score, player2Score);
+        photonView.RPC(nameof(AddScoreToData), RpcTarget.AllBuffered, playerID);
+
+        LeanTween.delayedCall(.5f, () =>
+        {
+            player1Input = "";
+            player2Input = "";
+            isActive = true;
+        });
     }
 
     [PunRPC]
@@ -658,32 +328,21 @@ public class MultiPlayerManager : MonoBehaviourPunCallbacks
     }
 
     [PunRPC]
-    private void PenaltyTime(PlayerState state)
+    private void ShowScore()
     {
-        _penaltyTime -= Time.deltaTime;
-        MultiPlayerUI.Instance.ShowPenaltyTimer(_penaltyTime, true);
-        if (_penaltyTime <= 0 || (_penaltyTime > 0 && _penaltyTime < 1))
-        {
-            isActive = false;
-            MultiPlayerUI.Instance.ShowPenaltyTimer(_penaltyTime, false);
+        MultiPlayerUI.Instance.photonView.RPC("ShowScore", RpcTarget.AllBuffered, player1Score, player2Score);
+    }
 
-            switch (state)
-            {
-                case PlayerState.PLAYER1:
-                    MultiPlayerData.Player1Score -= 1;
-                    MultiPlayerData.Player2Score += 2;
-                    break;
-                case PlayerState.PLAYER2:
-                    MultiPlayerData.Player1Score += 2;
-                    MultiPlayerData.Player2Score -= 1;
-                    break;
-            }
-            LeanTween.delayedCall(.5f, () =>
-            {
-                _penaltyTime = penaltyTime;
-                isActive = true;
-            });
-        }
+    [PunRPC]
+    private void AddScoreToData(int playerId)
+    {
+        if (player1Score <= 0) player1Score = 0;
+        if (player2Score <= 0) player2Score = 0;
+
+        if (playerId == 1) MultiPlayerData.Player1Score = player1Score;
+        if (playerId == 2) MultiPlayerData.Player2Score = player2Score;
+
+        Debug.Log(string.Format("Player1Score : {0}, Player2Score : {1}", MultiPlayerData.Player1Score, MultiPlayerData.Player2Score));
     }
 
     [PunRPC]
@@ -719,52 +378,15 @@ public class MultiPlayerManager : MonoBehaviourPunCallbacks
     [PunRPC]
     private void EndGame()
     {
-        MultiPlayerUI.Instance.ShowResultPanel();
+        MultiPlayerUI.Instance.photonView.RPC("ShowResultPanel", RpcTarget.AllBuffered);
 
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            Restart();
+            photonView.RPC("Restart", RpcTarget.AllBuffered);
         }
         else if (Input.GetKeyDown(KeyCode.Escape))
         {
-            Exit();
+            photonView.RPC("Exit", RpcTarget.AllBuffered);
         }
     }
-
-    [PunRPC]
-    private void AddToData(int playerID)
-    {
-        if (playerID == 1)
-        {
-            if (player1Score <= 0)
-            {
-                player1Score = 0;
-            }
-
-            MultiPlayerData.Player1Score = player1Score;
-
-        } 
-
-        if (playerID == 2)
-        {
-            if (player2Score <= 0)
-            {
-                player2Score = 0;
-            }
-
-            MultiPlayerData.Player2Score = player2Score;
-
-        }
-
-        LeanTween.delayedCall(.5f, () =>
-        {
-            player1Input = "";
-            player2Input = "";
-            isActive = true;
-        });
-
-        Debug.Log(string.Format("Player1Score : {0}, Player2Score : {1}", MultiPlayerData.Player1Score, MultiPlayerData.Player2Score));
-    }
-
-    #endregion
 }

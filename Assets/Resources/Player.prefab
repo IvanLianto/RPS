@@ -44,6 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fa63db8614267514c8be01b71342b53d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  photonPlayer: {fileID: 0}
   playerId: 0
   rockButton: {fileID: 0}
   scissorButton: {fileID: 0}

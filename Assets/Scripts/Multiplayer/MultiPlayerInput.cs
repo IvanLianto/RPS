@@ -5,7 +5,7 @@ using Photon.Pun;
 using Photon.Realtime;
 public class MultiPlayerInput : MonoBehaviourPunCallbacks
 {
-    public Player photonPlayer;
+    public MultiPlayerInput photonPlayer;
 
     public int playerId;
 
@@ -22,7 +22,7 @@ public class MultiPlayerInput : MonoBehaviourPunCallbacks
 
     public void Initialize(Player p)
     {
-        photonPlayer = p;
+        //photonPlayer = p;
 
         playerId = p.ActorNumber;
 
@@ -39,6 +39,8 @@ public class MultiPlayerInput : MonoBehaviourPunCallbacks
         rockButton = rock;
         paperButton = paper;
         scissorButton = scissor;
+
+        photonPlayer = this;
 
         playerId = photonView.Owner.ActorNumber;
 

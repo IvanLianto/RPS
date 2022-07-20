@@ -8,19 +8,29 @@ public class MultiPlayerUI : MonoBehaviourPunCallbacks
 {
     public static MultiPlayerUI Instance;
 
+    [Header("Player Name")]
+    private string P1Name;
+    private string P2Name;
+
+    [Header("Timer n Player Score")]
     [SerializeField] private Text startTimeText;
     [SerializeField] private Text player1ScoreText;
     [SerializeField] private Text player2ScoreText;
     [SerializeField] private Text popupText;
     [SerializeField] private Text penaltyTimer;
 
+    [Header("Result Panel")]
     [SerializeField] private GameObject resultPanel;
-    [SerializeField] private Text scoreResult;
+    [SerializeField] private Text scoreP1ResultName;
+    [SerializeField] private Text scoreP1ResultValue;
+    [SerializeField] private Text scoreP2ResultName;
+    [SerializeField] private Text scoreP2ResultValue;
 
     [SerializeField] private GameObject pausePanel;
 
     [SerializeField] private Slider timer;
 
+    [Header("Enemy Result")]
     [SerializeField] private List<Sprite> resultImages = new List<Sprite>();
 
     [SerializeField] private Image result;
@@ -45,6 +55,8 @@ public class MultiPlayerUI : MonoBehaviourPunCallbacks
         timer.maxValue = MultiPlayerData.time;
         timer.value = MultiPlayerData.time;
         pausePanel.SetActive(false);
+        P1Name = PhotonNetwork.CurrentRoom.GetPlayer(1).NickName;
+        P2Name = PhotonNetwork.CurrentRoom.GetPlayer(2).NickName;
         player1ScoreText.text = string.Format("{0} : {1}", PhotonNetwork.CurrentRoom.GetPlayer(1).NickName, MultiPlayerData.Player1Score);
         player2ScoreText.text = string.Format("{0} : {1}", PhotonNetwork.CurrentRoom.GetPlayer(2).NickName, MultiPlayerData.Player2Score);
     }
@@ -141,7 +153,7 @@ public class MultiPlayerUI : MonoBehaviourPunCallbacks
             player1Score = 0;
         } else
         {
-            player1ScoreText.text = string.Format("{0} : {1}", PhotonNetwork.CurrentRoom.GetPlayer(1).NickName, player1Score);
+            player1ScoreText.text = string.Format("{0} : {1}", P1Name, player1Score);
         }
 
         if (player2Score <= 0)
@@ -149,7 +161,7 @@ public class MultiPlayerUI : MonoBehaviourPunCallbacks
             player2Score = 0;
         } else
         {
-            player2ScoreText.text = string.Format("{0} : {1}", PhotonNetwork.CurrentRoom.GetPlayer(2).NickName, player2Score);
+            player2ScoreText.text = string.Format("{0} : {1}", P2Name, player2Score);
         }
     }
 
@@ -188,6 +200,10 @@ public class MultiPlayerUI : MonoBehaviourPunCallbacks
     public void ShowResultPanel()
     {
         resultPanel.SetActive(true);
-        scoreResult.text = SinglePlayerData.score.ToString();
+        scoreP1ResultName.text = P1Name;
+        scoreP2ResultName.text = P2Name;
+
+        scoreP1ResultValue.text = MultiPlayerData.Player1Score.ToString();
+        scoreP2ResultValue.text = MultiPlayerData.Player2Score.ToString();
     }
 }

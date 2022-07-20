@@ -72,6 +72,9 @@ MonoBehaviour:
   - Player2Condition
   - AddToData
   - DeliverToData
+  - AddChoiseToData
+  - AddScoreToData
+  - InitPlayer
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1
