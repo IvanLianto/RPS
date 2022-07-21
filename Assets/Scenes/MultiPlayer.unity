@@ -234,7 +234,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerObj: {fileID: 6223493656279889710, guid: 3060540fb32d33a4abe7f552bb5b8f95, type: 3}
   startTime: 3
-  time: 100000
+  time: 60
   score: 0
   rockButton: {fileID: 1920836451}
   scissorButton: {fileID: 1553166328}
